@@ -152,8 +152,9 @@
 
     <script src="https://apis.google.com/js/api.js"></script>
     <script>
-        let CLIENT_ID = 'SEU_CLIENT_ID';
-        let API_KEY = 'SEU_API_KEY';
+           <script>
+        let CLIENT_ID = '652400519686-5cr9kag5b88ncchd64917uuvpsehl98c.apps.googleusercontent.com';
+        let API_KEY = 'AIzaSyBZwO-HtC6Q61APY8ocpMi80-txCDHpC4Y';
 
         let DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"];
         let SCOPES = "https://www.googleapis.com/auth/calendar.events";
@@ -161,7 +162,83 @@
         let authorizeButton = document.getElementById('authorize_button');
         let addEventButton = document.getElementById('add_event_button');
 
-        // Aqui você pode adicionar o restante do código JavaScript para interação com o Google Calendar
+        // Carrega o cliente da API e a biblioteca de autenticação
+        function handleClientLoad() {
+            gapi.load('client:auth2', initClient);
+        }
+
+        // Inicializa o cliente da API Google e configura a autenticação
+        function initClient() {
+            gapi.client.init({
+                apiKey: API_KEY,
+                clientId: CLIENT_ID,
+                discoveryDocs: DISCOVERY_DOCS,
+                scope: SCOPES
+            }).then(function () {
+                // Escuta as mudanças no status de login
+                gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+
+                // Atualiza o status de login
+                updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+
+                // Vincula as funções de autenticação e criação de eventos aos botões
+                authorizeButton.onclick = handleAuthClick;
+                addEventButton.onclick = handleAddEvent;
+            });
+        }
+
+        // Atualiza a interface com base no status de login
+        function updateSigninStatus(isSignedIn) {
+            if (isSignedIn) {
+                authorizeButton.style.display = 'none';  // Oculta o botão de autorização
+                addEventButton.style.display = 'block';  // Exibe o botão para adicionar eventos
+            } else {
+                authorizeButton.style.display = 'block'; // Exibe o botão de autorização
+                addEventButton.style.display = 'none';   // Oculta o botão de adicionar eventos
+            }
+        }
+
+        // Função para autenticação do usuário
+        function handleAuthClick(event) {
+            gapi.auth2.getAuthInstance().signIn();
+        }
+
+        // Função para adicionar o lembrete ao Google Calendar
+        function handleAddEvent(event) {
+            let summary = document.getElementById('remedio').value;
+            let date = document.getElementById('data').value;
+            let time = document.getElementById('hora').value;
+
+            // Validação básica
+            if (!date || !time) {
+                alert('Por favor, preencha a data e hora do lembrete.');
+                return;
+            }
+
+            let eventDetails = {
+                'summary': summary,
+                'start': {
+                    'dateTime': new Date(date + 'T' + time + ':00').toISOString(),
+                    'timeZone': 'America/Sao_Paulo'
+                },
+                'end': {
+                    'dateTime': new Date(date + 'T' + time + ':00').toISOString(),
+                    'timeZone': 'America/Sao_Paulo'
+                },
+            };
+
+            let request = gapi.client.calendar.events.insert({
+                'calendarId': 'primary',
+                'resource': eventDetails
+            });
+
+            request.execute(function (event) {
+                alert('Lembrete adicionado ao Google Calendar: ' + event.htmlLink);
+            });
+        }
+
+        // Carregar o cliente da API quando o documento estiver pronto
+        document.addEventListener('DOMContentLoaded', handleClientLoad);
     </script>
 </body>
 </html>
